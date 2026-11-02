@@ -8,6 +8,10 @@ It was developed and calibrated in Côte d'Ivoire, on patients with dark skin, a
 [Yako](https://yako.app) health app. The goal is to bring a first screening step to women in places with no
 laboratory nearby, starting with pharmacies.
 
+**Live scan (Yako app, in French):** https://api.34-77-18-188.sslip.io/3 shows the live guidance, the automatic
+photo and the analysed area. In the app, the result then comes back in the conversation; to see the colour result,
+run the demo of this repository (one command, see [Quick start](#quick-start)).
+
 > **Research prototype.** It is not a medical device and does not give a diagnosis. Only a blood test measures
 > hemoglobin. Do not use it to rule out anemia in a pregnant woman or in someone with warning signs.
 
@@ -201,6 +205,10 @@ seule une prise de sang mesure l'hémoglobine.
 
 Sur 152 patients (dont 34 anémiques) : AUC 0,70, sensibilité 0,87, spécificité 0,41, aucun cas sévère (Hb < 9 g/dL)
 classé vert. Détails et limites dans [MODEL_CARD.md](MODEL_CARD.md).
+
+**Scan en direct (application Yako) :** https://api.34-77-18-188.sslip.io/3 montre le guidage, la photo automatique et
+la zone analysée. Dans l'application, le résultat arrive ensuite dans la conversation ; pour voir la couleur du
+résultat, lancer la démonstration de ce dépôt (une commande, ci-dessous).
 
 ### Démarrage rapide
 
