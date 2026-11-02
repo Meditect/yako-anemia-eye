@@ -25,3 +25,16 @@ def test_rejects_unusable_images():
     assert not eye.predict(np.full((100, 100, 3), 128, np.uint8)).ok              # too small
     noise = np.random.default_rng(0).integers(0, 255, (800, 800, 3), dtype=np.uint8)
     assert not eye.predict(noise).ok                                               # no conjunctiva
+
+
+def test_series_keeps_the_median_photo():
+    from anemia_eye import Result
+    class Fake(AnemiaEye):
+        def __init__(self, results): self.results = iter(results)
+        def predict(self, img): return next(self.results)
+    mk = lambda a: Result(True, None, eye.score(a)[0], a, eye.score(a)[1], None, {})
+    r = Fake([mk(9.0), mk(3.0), mk(6.0)]).predict_series([0, 1, 2])
+    assert r.a_norm == 6.0 and r.debug['n_photos'] == 3
+    r = Fake([Result(False, 'blurry'), mk(9.0), mk(3.0)]).predict_series([0, 1, 2])
+    assert r.a_norm == 3.0                     # two valid photos: the more cautious one
+    assert not Fake([Result(False, 'blurry')] * 3).predict_series([0, 1, 2]).ok

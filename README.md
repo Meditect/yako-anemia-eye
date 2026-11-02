@@ -67,6 +67,29 @@ depends on the skin itself, so the model is calibrated for dark skin and needs r
 - *One feature, simple model.* With 34 anemic patients, a model with more inputs learns noise. A logistic regression on
   a single measure is easy to check, and its output is monotonic: a paler conjunctiva never lowers the risk.
 
+## Repeatability
+
+A screening tool must give the same answer when the photo is taken again. We ran the full pipeline on every photo of
+the cohort: several photos of the same eye taken seconds apart (419 usable photos, 90 series).
+
+| | Value |
+|---|---|
+| Spread of a\* between patients (SD) | 4.0 |
+| Spread of a\* from one photo to the next, same eye (SD) | 1.1 |
+| Intraclass correlation (ICC) | 0.93, "excellent" on the usual scale (above 0.90, Koo & Li 2016) |
+| Two single photos give the same colour | 83 to 90% |
+| Two photos give green and red | 2 pairs out of 837 |
+
+When the colour changes, it moves to the next level (green to orange, orange to red), for patients close to a
+threshold. Averaging repeated measurements makes a measure more reliable (Spearman-Brown formula), so **the app and the
+demo take 3 photos 0.25 s apart and keep the median**: two such results agree in 91% of cases instead of 83%. The median
+rather than the mean, so that one failed photo (blink, glare) does not move the result. When the 3 photos do not all
+give the same level, the result says it is close to a threshold.
+
+These photos were taken in one session, under the same light. Between two separate sessions the variation is larger:
+light is the main source of variation of conjunctival colour on photos, and normalisation reduces it without removing
+it (Collings et al. 2016). Measuring this test-retest variation is part of the planned validation.
+
 ## Results
 
 Cohort from Côte d'Ivoire, 2 sites, **152 patients, 34 with anemia** (hemoglobin from a blood count, WHO thresholds by
@@ -219,6 +242,17 @@ SHA-256 is checked after download.
 - Larger cohort of women of reproductive age and pregnant women.
 - Combination with other signals (nail bed, symptoms) to raise specificity.
 
+## References
+
+- Collings S. et al. Non-invasive detection of anaemia using digital photographs of the conjunctiva. *PLoS ONE*, 2016.
+  [PMC4829242](https://pmc.ncbi.nlm.nih.gov/articles/PMC4829242/)
+- Koo T.K., Li M.Y. A guideline of selecting and reporting intraclass correlation coefficients for reliability
+  research. *Journal of Chiropractic Medicine*, 15(2), 2016. doi:10.1016/j.jcm.2016.02.012
+- Mannino R.G. et al. Smartphone app for non-invasive detection of anemia using only patient-sourced photos. *Nature
+  Communications*, 9, 2018.
+- Prediction of anemia in real-time using a smartphone camera processing conjunctival images, 2024.
+  [PMC11090304](https://pmc.ncbi.nlm.nih.gov/articles/PMC11090304/)
+
 ## Authors
 
 Developed by [Meditect](https://meditect.com). Research, data collection and model by Issa Cissé.
@@ -277,6 +311,19 @@ la peau dépend de la peau elle-même, donc le modèle est calibré pour les pea
 - *Une seule mesure, un modèle simple.* Avec 34 patients anémiques, un modèle à plusieurs entrées apprend du bruit. Une
   régression logistique sur une seule mesure se vérifie facilement, et elle est monotone : une conjonctive plus pâle ne
   fait jamais baisser le risque.
+
+### Répétabilité
+
+Un outil de dépistage doit donner la même réponse quand on refait la photo. Nous avons passé chaque photo de la cohorte
+dans le modèle : plusieurs photos du même œil prises à quelques secondes d'intervalle (419 photos utilisables, 90
+séries). L'écart de a\* d'une photo à l'autre (écart-type 1,1) est petit devant l'écart entre patients (4,0) : ICC 0,93,
+« excellent » selon l'échelle habituelle (Koo & Li 2016). Deux photos donnent la même couleur dans 83 à 90 % des cas ;
+sinon, c'est presque toujours la couleur voisine, chez des patients proches d'un seuil (vert et rouge : 2 paires sur
+837). Comme la moyenne de mesures répétées est plus fiable (formule de Spearman-Brown), **l'application et la démo
+prennent 3 photos à 0,25 s d'intervalle et gardent la médiane** : deux résultats concordent alors dans 91 % des cas au
+lieu de 83 %. Quand les 3 photos ne donnent pas toutes le même niveau, le résultat le dit. Ces photos viennent d'une
+même séance : entre deux séances, la variation est plus grande, la lumière étant la principale source de variation
+(Collings et al. 2016). La mesurer fait partie de la validation prévue.
 
 ### Démarrage rapide
 

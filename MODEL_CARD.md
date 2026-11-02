@@ -38,13 +38,20 @@ Sensitivity and specificity are out of sample (5-fold cross-validation repeated 
 
 Performance is better on wide shots (eye and surrounding face visible) than on close-ups.
 
+## Repeatability (same eye, photos seconds apart)
+
+419 usable photos in 90 series. SD of a\* within a series 1.1, between patients 4.0, ICC 0.93. Two single photos give
+the same colour in 83 to 90% of pairs; green and red together in 2 pairs out of 837. Median of 3 photos (what the app
+does): agreement 91% instead of 83% (simulated on the 28 series with at least 6 photos). Same session and same light
+only: test-retest across sessions remains to be measured.
+
 ## Known limitations
 
 - **Small cohort**: 34 anemic patients, so wide confidence intervals. These numbers need a prospective validation.
 - **One country, dark skin**: the skin anchor removes most of the effect of the phone and the light, but the offset it
   corrects depends on the skin. The model is not expected to transfer as is to lighter skin; it needs recalibration.
 - **Light**: under a ±20% change of lighting, about a third of borderline results can switch category. The capture
-  guidance and the quality checks reduce this, they do not remove it.
+  guidance, the quality checks and the median of 3 photos reduce this, they do not remove it.
 - **Phones**: small systematic differences between phone models were observed; the sample per model is too small to
   correct them yet.
 - **Moderate specificity**: more than half of non-anemic people get orange or red. Orange and red carry a similar

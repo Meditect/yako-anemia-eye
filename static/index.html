@@ -72,7 +72,7 @@
         <div class="guide" id="guide" aria-hidden="true"></div>
         <div class="hint" id="hint" role="status" aria-live="polite">Opening the camera…</div>
         <div class="count" id="count" hidden aria-live="assertive"></div>
-        <div class="done" id="done" hidden>Photo taken, thank you!<br>Analysing…</div>
+        <div class="done" id="done" hidden>Photos taken, thank you!<br>Analysing…</div>
       </div>
     </div>
 
@@ -215,27 +215,48 @@ async function countdown() {
   c.hidden = true; counting = false;
   capture();
 }
-function capture() {
-  if (busy) return; busy = true; stopGuide();
-  const c = document.createElement('canvas');                   // full resolution, unmirrored
-  c.width = video.videoWidth; c.height = video.videoHeight;
-  c.getContext('2d').drawImage(video, 0, 0);
-  // Photo taken: close the camera right away, the patient can let go of the eyelid.
+// Three photos 0.25 s apart, then the median. On 90 series of the cohort, a* varies by 1.1 (SD) from one
+// photo to the next against 4.0 between patients (ICC 0.93); two single photos give the same colour in 83%
+// of cases, two medians of 3 in 91%. Median rather than mean: one failed photo (blink, glare) does not move it.
+async function capture() {
+  if (busy) return; busy = true; stopGuide(); hint('Hold still…', true);
+  const blobs = [];
+  for (let i = 0; i < 3; i++) {
+    if (i) await new Promise(r => setTimeout(r, 250));
+    const c = document.createElement('canvas');                 // full resolution, unmirrored
+    c.width = video.videoWidth; c.height = video.videoHeight;
+    c.getContext('2d').drawImage(video, 0, 0);
+    blobs.push(await new Promise(r => c.toBlob(r, 'image/jpeg', 0.92)));
+  }
+  // Photos taken: close the camera right away, the patient can let go of the eyelid.
   if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
   $('hint').textContent = ''; $('hint').classList.remove('ok'); $('done').hidden = false; $('controls').hidden = true;
-  c.toBlob(b => analyse(b), 'image/jpeg', 0.92);
+  analyse(blobs);
+}
+// Keeps the photo with the median a*, so its image, probability and colour stay consistent. With two valid
+// photos, keeps the more cautious one (higher probability): this is screening. `stable` says whether all
+// photos give the same colour.
+function combine(results) {
+  const ok = results.filter(r => r && r.ok && typeof r.a_norm === 'number');
+  if (!ok.length) return results.find(r => r && r.error && r.error !== 'Server unreachable') || results[0];
+  ok.sort((a, b) => a.a_norm - b.a_norm);
+  const pick = ok.length === 2 ? (ok[0].probability >= ok[1].probability ? ok[0] : ok[1]) : ok[(ok.length - 1) / 2 | 0];
+  return { ...pick, n_photos: ok.length, stable: new Set(ok.map(r => r.triage)).size === 1 };
 }
 
 $('shoot').onclick = capture;
 $('choose').onclick = () => $('file').click();
-$('file').onchange = e => { const f = e.target.files[0]; if (f) { stopCamera(); $('camera').hidden = true; $('controls').hidden = true; busy = true; analyse(f); } e.target.value = ''; };
+$('file').onchange = e => { const f = e.target.files[0]; if (f) { stopCamera(); $('camera').hidden = true; $('controls').hidden = true; busy = true; analyse([f]); } e.target.value = ''; };
 
-async function analyse(blob) {
-  out.hidden = false; out.textContent = 'Analysing…';
-  const body = new FormData(); body.append('file', blob, 'eye.jpg');
-  let r;
-  try { r = await (await fetch('/api/predict', { method: 'POST', body })).json(); }
-  catch (x) { r = { ok: false, error: 'Server unreachable' }; }
+async function analyse(blobs) {
+  out.hidden = false; const results = [];
+  for (const [i, blob] of blobs.entries()) {
+    out.textContent = blobs.length > 1 ? `Analysing photo ${i + 1} of ${blobs.length}…` : 'Analysing…';
+    const body = new FormData(); body.append('file', blob, 'eye.jpg');
+    try { results.push(await (await fetch('/api/predict', { method: 'POST', body })).json()); }
+    catch (x) { results.push({ ok: false, error: 'Server unreachable' }); }
+  }
+  const r = combine(results);
   $('camera').hidden = true; out.replaceChildren();
   if (!r.ok) {
     const e = document.createElement('div'); e.className = 'verdict'; e.textContent = r.error || 'Analysis failed';
@@ -257,7 +278,10 @@ async function analyse(blob) {
     const img = new Image(); img.alt = 'Analysed area: conjunctiva in green, skin reference in blue';
     img.src = 'data:image/jpeg;base64,' + r.overlay;
     out.append(el('div', 'small', 'Anemia risk'), el('div', 'verdict ' + r.triage, name), el('div', null, advice),
-               gauge, legend, m, img, el('div', 'small', 'Green: the area measured. Blue: the skin used as reference.'),
+               gauge, legend);
+    if (r.stable === false) out.append(el('div', 'small', `Your ${r.n_photos} photos do not all give the same level: the result is close `
+      + 'to a threshold. The level shown is that of the median photo; a blood test will settle it.'));
+    out.append(m, img, el('div', 'small', 'Green: the area measured. Blue: the skin used as reference.'),
                el('div', 'small', 'Research demo, not a diagnosis: only a blood test measures hemoglobin. Pregnant women '
                                  + 'and anyone with warning signs (breathlessness, fainting) need a blood test whatever the result.'));
   }
