@@ -74,7 +74,7 @@ limitations.
 Python 3.10 or later. CPU is enough (about one second per photo).
 
 ```bash
-git clone <this repository> && cd yako-anemia-eye
+git clone https://github.com/Meditect/yako-anemia-eye.git && cd yako-anemia-eye
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 
@@ -170,4 +170,65 @@ Developed by [Meditect](https://meditect.com). Research, data collection and mod
 Yako analyse une photo de l'intérieur de la paupière inférieure pour repérer une pâleur liée à l'anémie, et donne un
 tri simple : vert, orange ou rouge. Le modèle a été construit en Côte d'Ivoire, sur 152 patients à peau foncée, et
 fonctionne aujourd'hui dans l'application Yako. C'est un prototype de recherche pour le dépistage, pas un diagnostic :
-seule une prise de sang mesure l'hémoglobine. Installation et utilisation : voir *Quick start* ci-dessus.
+seule une prise de sang mesure l'hémoglobine.
+
+Sur 152 patients (dont 34 anémiques) : AUC 0,70, sensibilité 0,87, spécificité 0,41, aucun cas sévère (Hb < 9 g/dL)
+classé vert. Détails et limites dans [MODEL_CARD.md](MODEL_CARD.md).
+
+### Démarrage rapide
+
+Il faut Python 3.10 ou plus récent. Un ordinateur ordinaire suffit (environ une seconde par photo), sans carte
+graphique.
+
+```bash
+git clone https://github.com/Meditect/yako-anemia-eye.git && cd yako-anemia-eye
+python -m venv .venv && source .venv/bin/activate     # sous Windows : .venv\Scripts\activate
+pip install -r requirements.txt
+
+# En ligne de commande (les poids du modèle, 125 Mo, se téléchargent au premier lancement)
+python predict.py photo_oeil.jpg --overlay resultats/
+
+# Page de démonstration
+uvicorn server:app --host 0.0.0.0 --port 8000
+# puis ouvrir http://localhost:8000 dans le navigateur
+```
+
+La page ouvre directement la caméra (webcam sur ordinateur, caméra du téléphone), avec un ovale qui montre où placer
+la partie rose. On peut aussi choisir une photo existante.
+
+Sur téléphone, le navigateur n'autorise la caméra en direct qu'en https. Pour tester depuis un téléphone sur le même
+Wi-Fi :
+
+```bash
+openssl req -x509 -newkey rsa:2048 -nodes -days 30 -subj "/CN=yako-demo" -keyout key.pem -out cert.pem
+uvicorn server:app --host 0.0.0.0 --port 8000 --ssl-keyfile key.pem --ssl-certfile cert.pem
+# puis ouvrir https://<adresse IP de l'ordinateur>:8000 sur le téléphone et accepter l'avertissement du certificat
+```
+
+En http simple, la page ouvre l'appareil photo du téléphone à la place, ce qui marche aussi.
+
+Avec Docker :
+
+```bash
+docker build -t yako-eye . && docker run -p 8000:8000 yako-eye
+```
+
+### Bien prendre la photo
+
+- À la lumière du jour ou dans une pièce bien éclairée, sans flash.
+- Tirer la paupière du bas vers le bas avec un doigt pour montrer la partie rose.
+- L'œil au milieu de l'image, avec un peu de peau visible autour.
+
+Quand une photo est inutilisable, l'outil dit pourquoi (trop sombre, floue, partie rose non visible, mal centrée) au
+lieu de donner un résultat.
+
+### Que veut dire chaque couleur
+
+| Résultat | Conseil |
+|---|---|
+| Vert | Pas de prise de sang nécessaire pour l'instant, sauf symptômes ou grossesse |
+| Orange | Prise de sang conseillée |
+| Rouge | Prise de sang fortement conseillée |
+
+Une femme enceinte, ou une personne avec des signes d'alerte (essoufflement, malaise, saignements abondants), doit
+faire une prise de sang quel que soit le résultat.
