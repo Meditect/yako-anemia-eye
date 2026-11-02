@@ -3,7 +3,7 @@
 torch>=2.1
 torchvision>=0.16
 segmentation-models-pytorch>=0.3.3
-opencv-python-headless>=4.8,<5   # 5.x shifts the Lab conversion slightly: results would differ from the app
+opencv-python-headless>=4.8,<5   # tested with 4.x
 numpy>=1.24
 requests>=2.28
 fastapi>=0.110
