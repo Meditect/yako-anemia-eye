@@ -241,7 +241,8 @@ function combine(results) {
   if (!ok.length) return results.find(r => r && r.error && r.error !== 'Server unreachable') || results[0];
   ok.sort((a, b) => a.a_norm - b.a_norm);
   const pick = ok.length === 2 ? (ok[0].probability >= ok[1].probability ? ok[0] : ok[1]) : ok[(ok.length - 1) / 2 | 0];
-  return { ...pick, n_photos: ok.length, stable: new Set(ok.map(r => r.triage)).size === 1 };
+  const levels = ['green', 'orange', 'red'].filter(n => ok.some(r => r.triage === n));
+  return { ...pick, n_photos: ok.length, stable: levels.length === 1, levels };
 }
 
 $('shoot').onclick = capture;
@@ -279,8 +280,13 @@ async function analyse(blobs) {
     img.src = 'data:image/jpeg;base64,' + r.overlay;
     out.append(el('div', 'small', 'Anemia risk'), el('div', 'verdict ' + r.triage, name), el('div', null, advice),
                gauge, legend);
-    if (r.stable === false) out.append(el('div', 'small', `Your ${r.n_photos} photos do not all give the same level: the result is close `
-      + 'to a threshold. The level shown is that of the median photo; a blood test will settle it.'));
+    // The photos fall in different levels: the person is close to a threshold. Said as for a blood result at
+    // the limit, without casting doubt on the measure.
+    if (r.stable === false && r.levels) {
+      const word = { green: 'low', orange: 'moderate', red: 'high' }, l = r.levels;
+      out.append(el('div', null, `Your result is close to the limit between "${word[l[0]]}" and "${word[l[l.length - 1]]}": `
+        + 'a blood test will settle it.'));
+    }
     out.append(m, img, el('div', 'small', 'Green: the area measured. Blue: the skin used as reference.'),
                el('div', 'small', 'Research demo, not a diagnosis: only a blood test measures hemoglobin. Pregnant women '
                                  + 'and anyone with warning signs (breathlessness, fainting) need a blood test whatever the result.'));

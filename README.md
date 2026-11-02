@@ -84,7 +84,7 @@ When the colour changes, it moves to the next level (green to orange, orange to 
 threshold. Averaging repeated measurements makes a measure more reliable (Spearman-Brown formula), so **the app and the
 demo take 3 photos 0.25 s apart and keep the median**: two such results agree in 91% of cases instead of 83%. The median
 rather than the mean, so that one failed photo (blink, glare) does not move the result. When the 3 photos do not all
-give the same level, the result says it is close to a threshold.
+give the same level, the result says that the person is close to a threshold.
 
 These photos were taken in one session, under the same light. Between two separate sessions the variation is larger:
 light is the main source of variation of conjunctival colour on photos, and normalisation reduces it without removing
@@ -321,7 +321,7 @@ séries). L'écart de a\* d'une photo à l'autre (écart-type 1,1) est petit dev
 sinon, c'est presque toujours la couleur voisine, chez des patients proches d'un seuil (vert et rouge : 2 paires sur
 837). Comme la moyenne de mesures répétées est plus fiable (formule de Spearman-Brown), **l'application et la démo
 prennent 3 photos à 0,25 s d'intervalle et gardent la médiane** : deux résultats concordent alors dans 91 % des cas au
-lieu de 83 %. Quand les 3 photos ne donnent pas toutes le même niveau, le résultat le dit. Ces photos viennent d'une
+lieu de 83 %. Quand les 3 photos ne donnent pas toutes le même niveau, le résultat indique que la personne est proche d'une limite. Ces photos viennent d'une
 même séance : entre deux séances, la variation est plus grande, la lumière étant la principale source de variation
 (Collings et al. 2016). La mesurer fait partie de la validation prévue.
 
