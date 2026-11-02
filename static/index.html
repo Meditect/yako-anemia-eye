@@ -70,7 +70,6 @@
 
     <div class="row" id="controls">
       <button class="main" id="shoot" type="button" hidden>Take the photo now</button>
-      <button class="sec" id="flip" type="button" hidden>Switch camera</button>
     </div>
     <!-- Fallback when the live camera is not available (no camera, permission refused, or page not on https). -->
     <label class="pick main" id="fallback" hidden>Take or choose a photo
@@ -86,23 +85,20 @@ const $ = id => document.getElementById(id);
 const out = $('out'), video = $('video');
 const TEXT = { green: 'Low probability of anemia', orange: 'Uncertain: a blood test is advised',
                red: 'High probability of anemia: a blood test is strongly advised' };
-let stream = null, facing = 'user', busy = false;
+let stream = null, busy = false;
 
 async function openCamera() {
   stopCamera();
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return noCamera(
     window.isSecureContext ? 'No camera on this device.' : 'The live camera needs https (or localhost).');
   try {
-    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: facing, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false });
+    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false });
   } catch (e) {
     return noCamera(e.name === 'NotAllowedError' ? 'Camera access was refused.' : 'The camera could not be opened.');
   }
   video.srcObject = stream;
   await video.play().catch(() => {});
-  video.classList.toggle('mirror', facing === 'user');
   $('camera').hidden = false; $('controls').hidden = false; $('fallback').hidden = true; $('done').hidden = true;
-  const cams = (await navigator.mediaDevices.enumerateDevices()).filter(d => d.kind === 'videoinput');
-  $('flip').hidden = cams.length < 2;
   guide();
 }
 function stopCamera() { stopGuide(); if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; } }
@@ -115,7 +111,7 @@ function noCamera(why) {
    Several times per second, inside the oval only: enough light, no glare, a still image, the pink
    inner eyelid visible, a sharp image. Nothing is sent to the server meanwhile. Same measures and
    thresholds as the Yako app, calibrated on 478 annotated photos of 86 patients. */
-let timer = null, ready = 0, counting = false, previous = null, openedAt = 0;
+let timer = null, ready = 0, bad = 0, counting = false, previous = null, openedAt = 0;
 const box = document.createElement('canvas'), bctx = box.getContext('2d', { willReadFrequently: true });
 function targetArea() {
   const st = $('stage'), sw = st.clientWidth, sh = st.clientHeight, vw = video.videoWidth, vh = video.videoHeight;
@@ -172,13 +168,15 @@ function problem(m) {
 }
 function hint(text, ok) { $('hint').textContent = text; $('hint').classList.toggle('ok', !!ok); $('guide').classList.toggle('ok', !!ok); }
 function guide() {
-  stopGuide(); ready = 0; previous = null; openedAt = Date.now(); $('shoot').hidden = true;
+  stopGuide(); ready = 0; bad = 0; previous = null; openedAt = Date.now(); $('shoot').hidden = true;
   timer = setInterval(() => {
     if (busy) return;
     const p = problem(measure());
     if (Date.now() - openedAt > 7000) $('shoot').hidden = false;   // manual button if guidance gets stuck
-    if (p) { ready = 0; if (!counting) hint(p); return; }
-    ready++;
+    // A webcam keeps adjusting its exposure: one bad frame must not cancel a countdown,
+    // only a problem that lasts (3 checks in a row, about half a second).
+    if (p) { bad++; if (!counting || bad >= 3) { ready = 0; hint(p); } return; }
+    bad = 0; ready++;
     if (!counting) hint('Perfect, hold still', true);
     if (ready >= 4 && !counting) countdown();                      // about 0.6 s in a row without a problem
   }, 150);
@@ -208,7 +206,6 @@ function capture() {
 }
 
 $('shoot').onclick = capture;
-$('flip').onclick = () => { facing = facing === 'user' ? 'environment' : 'user'; openCamera(); };
 $('choose').onclick = () => $('file').click();
 $('file').onchange = e => { const f = e.target.files[0]; if (f) { stopCamera(); $('camera').hidden = true; $('controls').hidden = true; busy = true; analyse(f); } e.target.value = ''; };
 

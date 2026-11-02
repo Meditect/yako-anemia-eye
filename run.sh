@@ -52,7 +52,19 @@ fi
 # 4. Model weights (125 MB, first time only)
 .venv/bin/python -c "from anemia_eye import download_weights; download_weights()"
 
-# 5. Start the demo and open the browser once it answers
+# 5. Start the demo and open the browser once it answers (next free port if this one is taken)
+PORT=$(.venv/bin/python -c "
+import socket, sys
+p = int(sys.argv[1])
+while True:
+    with socket.socket() as s:
+        busy = s.connect_ex(('127.0.0.1', p)) == 0      # something already answers there
+    if not busy:
+        with socket.socket() as s:
+            try: s.bind(('127.0.0.1', p)); break
+            except OSError: pass
+    p += 1
+print(p)" "$PORT")
 URL="http://localhost:$PORT"
 say "Starting the demo on $URL (press Ctrl+C to stop)"
 (
