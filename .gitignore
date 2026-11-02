@@ -10,3 +10,4 @@ data/
 *.png
 *.heic
 *.pem
+.venv/

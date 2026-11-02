@@ -71,6 +71,32 @@ limitations.
 
 ## Quick start
 
+### Try it in one command
+
+You only need [Python 3.10 or later](https://www.python.org/downloads/). Open a terminal and paste:
+
+**macOS / Linux** (Terminal)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Meditect/yako-anemia-eye/main/run.sh | bash
+```
+
+**Windows** (PowerShell)
+
+```powershell
+irm https://raw.githubusercontent.com/Meditect/yako-anemia-eye/main/run.ps1 | iex
+```
+
+It downloads the code into a `yako-anemia-eye` folder in your home directory, installs everything in a private Python
+environment (nothing is installed system-wide), downloads the model and opens the demo in your browser. The first run
+takes a few minutes; the next ones start in seconds. Press `Ctrl+C` in the terminal to stop.
+
+The demo works like the Yako app: the camera opens in the page, live checks guide the person (light, reflections,
+movement, position of the pink inner eyelid, blur), and when everything is right a 3-2-1 countdown starts and the
+photo takes itself. The camera closes right away, then the result is shown with the analysed area.
+
+### Manual installation
+
 Python 3.10 or later (the commands below use `python3`, as on macOS and Linux; on Windows type `python`). CPU is enough (about one second per photo).
 
 ```bash
@@ -89,8 +115,8 @@ uvicorn server:app --host 0.0.0.0 --port 8000
 
 Then open http://localhost:8000.
 
-The web demo opens the camera directly in the page, on a computer (webcam) as on a phone, with an oval guide where
-the pink inner eyelid should be. Choosing an existing photo is also possible.
+The web demo opens the camera directly in the page, on a computer (webcam) as on a phone, with the live guidance and
+automatic photo described above. Choosing an existing photo is also possible.
 
 On a phone, browsers allow the live camera only over https. To test from a phone on the same Wi-Fi:
 
@@ -136,7 +162,8 @@ giving a result.
 | `anemia_eye/pipeline.py` | The whole pipeline: quality, segmentation, measure, score |
 | `anemia_eye/model_calibration.json` | Logistic regression parameters (mean, scale, coefficient, intercept) |
 | `predict.py` | Command line |
-| `server.py`, `static/index.html` | Web demo (FastAPI) |
+| `server.py`, `static/index.html` | Web demo (FastAPI) with live guidance and automatic photo |
+| `run.sh`, `run.ps1` | One-command installation and launch (macOS/Linux, Windows) |
 | `tests/` | Unit tests |
 
 The segmentation weights are hosted on Hugging Face:
@@ -153,8 +180,6 @@ SHA-256 is checked after download.
 
 - Prospective validation in pharmacies, with blood tests for every participant.
 - Larger cohort of women of reproductive age and pregnant women.
-- Live guidance at capture time (already in the Yako app: countdown and automatic shot when the conjunctiva is
-  visible, with the real reason when it is not).
 - Combination with other signals (nail bed, symptoms) to raise specificity.
 
 ## Authors
@@ -179,6 +204,33 @@ classé vert. Détails et limites dans [MODEL_CARD.md](MODEL_CARD.md).
 
 ### Démarrage rapide
 
+#### Essayer en une commande
+
+Il suffit d'avoir [Python 3.10 ou plus récent](https://www.python.org/downloads/). Ouvrir un terminal et coller :
+
+**Mac / Linux** (Terminal)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Meditect/yako-anemia-eye/main/run.sh | bash
+```
+
+**Windows** (PowerShell)
+
+```powershell
+irm https://raw.githubusercontent.com/Meditect/yako-anemia-eye/main/run.ps1 | iex
+```
+
+La commande télécharge le code dans un dossier `yako-anemia-eye` du dossier personnel, installe tout dans un
+environnement Python séparé (rien n'est installé sur le reste de l'ordinateur), télécharge le modèle et ouvre la
+démonstration dans le navigateur. La première fois prend quelques minutes, les suivantes quelques secondes. `Ctrl+C`
+dans le terminal pour arrêter.
+
+La démonstration fonctionne comme l'application Yako : la caméra s'ouvre dans la page, un guidage en direct aide la
+personne (lumière, reflets, mouvement, position de la partie rose, flou), puis un compte à rebours 3-2-1 démarre et la
+photo se prend toute seule. La caméra se ferme aussitôt, et le résultat s'affiche avec la zone analysée.
+
+#### Installation manuelle
+
 Il faut Python 3.10 ou plus récent (les commandes utilisent `python3`, comme sur Mac et Linux ; sous Windows, taper `python`). Un ordinateur ordinaire suffit (environ une seconde par photo), sans carte
 graphique.
 
@@ -198,8 +250,8 @@ uvicorn server:app --host 0.0.0.0 --port 8000
 
 Puis ouvrir http://localhost:8000 dans le navigateur.
 
-La page ouvre directement la caméra (webcam sur ordinateur, caméra du téléphone), avec un ovale qui montre où placer
-la partie rose. On peut aussi choisir une photo existante.
+La page ouvre directement la caméra (webcam sur ordinateur, caméra du téléphone), avec le guidage et la photo
+automatique décrits plus haut. On peut aussi choisir une photo existante.
 
 Sur téléphone, le navigateur n'autorise la caméra en direct qu'en https. Pour tester depuis un téléphone sur le même
 Wi-Fi :
