@@ -34,6 +34,39 @@ photo ──► quality check ──► U-Net segmentation ──► skin-anchor
 
 The overlay shows what was measured: the conjunctiva in green and the skin reference in blue.
 
+## Why this measure
+
+**Why the conjunctiva.** Hemoglobin is what makes blood red. When it is low, the inside of the lower eyelid gets paler.
+Clinicians already look at it at the bedside. It is one of the few places where blood shows through without skin
+pigment in the way, which matters for patients with dark skin.
+
+**Why a\* (CIELAB).** The CIELAB colour space separates lightness (L\*) from colour; its a\* axis goes from green to red.
+Redness of the conjunctiva is what changes with anemia, and a\* measures it while being less sensitive to how bright the
+photo is. We compared many other features on the cohort: other colour spaces (HSV, YCrCb), colour statistics, texture,
+and the features proposed in the literature. None did better than a\* once the normalisation below was applied, so the
+model keeps this single measure.
+
+**Why normalise on the patient's own skin.** The same eye does not have the same colour on two phones or under two
+lights: each phone applies its own white balance and exposure. In our cohort, part of the colour differences came from
+the phone model rather than from the patients. The skin around the eye is in the same photo, under the same light, taken
+by the same phone, so it is used as a reference: the white balance is set on this skin (grey world), then
+`a_norm = a*(conjunctiva) - a*(skin)`. What remains is how much redder the conjunctiva is than the patient's own skin.
+This made the measure more robust to the place and the phone. The other side of it: the offset that the skin corrects
+depends on the skin itself, so the model is calibrated for dark skin and needs recalibration for other populations.
+
+**Details that matter.**
+
+- *A skin ring away from the eyelid.* The reference is a ring 10 to 40 pixels around the conjunctiva (on a 512×512
+  image), not glued to it. Glued to it, the ring falls on the rim of the eyelid, which also gets paler with anemia:
+  the subtraction then erases the signal. On close-up photos, the glued ring gave an AUC of 0.43, worse than chance.
+- *Colour filter on the ring.* On wide shots the ring can reach a finger, hair or the wall. Only pixels whose colour
+  matches the skin right next to the eye are kept. In nested cross-validation, this filter was selected in every fold.
+- *Reflections removed.* A reflection shows the colour of the light, not of the tissue, and pulls a\* towards zero, that
+  is towards "anemic". A simulated reflection on 10% of the conjunctiva raised the probability by 7 points on average;
+  with the filter, by less than 2.
+- *One feature, simple model.* With 34 anemic patients, a model with more inputs learns noise. A logistic regression on
+  a single measure is easy to check, and its output is monotonic: a paler conjunctiva never lowers the risk.
+
 ## Results
 
 Cohort from Côte d'Ivoire, 2 sites, **152 patients, 34 with anemia** (hemoglobin from a blood count, WHO thresholds by
@@ -209,6 +242,41 @@ classé vert. Détails et limites dans [MODEL_CARD.md](MODEL_CARD.md).
 **Scan en direct (application Yako) :** https://api.34-77-18-188.sslip.io/3 montre le guidage, la photo automatique et
 la zone analysée. Dans l'application, le résultat arrive ensuite dans la conversation ; pour voir la couleur du
 résultat, lancer la démonstration de ce dépôt (une commande, ci-dessous).
+
+### Pourquoi cette mesure
+
+**La conjonctive.** C'est l'hémoglobine qui rend le sang rouge. Quand elle baisse, l'intérieur de la paupière du bas
+pâlit. Les soignants le regardent déjà au lit du malade. C'est aussi l'un des rares endroits où le sang se voit sans
+le pigment de la peau, ce qui compte pour les peaux foncées.
+
+**La valeur a\* (espace CIELAB).** CIELAB sépare la luminosité (L\*) de la couleur ; l'axe a\* va du vert au rouge. C'est
+le rouge de la conjonctive qui change avec l'anémie, et a\* le mesure en étant moins sensible à la luminosité de la photo.
+Nous avons comparé de nombreuses autres caractéristiques sur la cohorte : autres espaces de couleur (HSV, YCrCb),
+statistiques de couleur, texture, caractéristiques de la littérature. Aucune n'a fait mieux que a\* une fois la
+normalisation ci-dessous appliquée : le modèle garde donc cette seule mesure.
+
+**La normalisation sur la peau du patient.** Un même œil n'a pas la même couleur sur deux téléphones ou sous deux
+lumières : chaque téléphone applique sa propre balance des blancs et sa propre exposition. Dans notre cohorte, une partie
+des écarts de couleur venait du modèle de téléphone, pas des patients. La peau autour de l'œil est dans la même photo,
+sous la même lumière, prise par le même téléphone : elle sert de référence. On règle la balance des blancs sur cette peau
+(monde gris), puis `a_norm = a*(conjonctive) - a*(peau)`. Il reste ce qui compte : de combien la conjonctive est plus
+rouge que la peau du patient. La mesure devient ainsi plus robuste au lieu et au téléphone. Revers : l'écart corrigé par
+la peau dépend de la peau elle-même, donc le modèle est calibré pour les peaux foncées et doit être recalibré ailleurs.
+
+**Les détails qui comptent.**
+
+- *Un anneau de peau écarté de la paupière.* La référence est un anneau de 10 à 40 pixels autour de la conjonctive (sur
+  une image de 512×512), pas collé à elle. Collé, il tombe sur le bord de la paupière, qui pâlit lui aussi avec l'anémie,
+  et la soustraction efface le signal : sur les gros plans, l'anneau collé donnait une AUC de 0,43, pire que le hasard.
+- *Un filtre de couleur sur l'anneau.* Sur un plan large, l'anneau peut toucher un doigt, des cheveux ou le mur. On ne
+  garde que les pixels dont la couleur ressemble à la peau juste à côté de l'œil. En validation croisée imbriquée, ce
+  filtre a été retenu dans tous les plis.
+- *Les reflets retirés.* Un reflet renvoie la couleur de la lumière, pas celle du tissu, et tire a\* vers zéro, donc vers
+  « anémique ». Un reflet simulé sur 10 % de la conjonctive augmentait la probabilité de 7 points en moyenne ; avec le
+  filtre, de moins de 2.
+- *Une seule mesure, un modèle simple.* Avec 34 patients anémiques, un modèle à plusieurs entrées apprend du bruit. Une
+  régression logistique sur une seule mesure se vérifie facilement, et elle est monotone : une conjonctive plus pâle ne
+  fait jamais baisser le risque.
 
 ### Démarrage rapide
 

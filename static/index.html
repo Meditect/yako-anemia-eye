@@ -41,6 +41,14 @@
   .verdict { font-size:20px; font-weight:700 }
   .green { color:var(--green) } .orange { color:var(--orange) } .red { color:var(--red) }
   .small { font-size:13px; color:var(--muted) }
+  .verdict { font-size:28px }
+  .gauge { position:relative; display:flex; height:12px; border-radius:6px }
+  .seg.green { background:var(--green); border-radius:6px 0 0 6px } .seg.orange { background:var(--orange) } .seg.red { background:var(--red); border-radius:0 6px 6px 0 }
+  .mark { position:absolute; top:-6px; width:6px; height:24px; border-radius:3px; background:var(--ink); transform:translateX(-50%); box-shadow:0 0 0 2px var(--card) }
+  .legend { display:flex; font-size:12px; color:var(--muted) } .legend span { text-align:center }
+  .measures { display:grid; grid-template-columns:1fr auto; gap:8px 16px; margin:0; padding:12px 14px; border-radius:12px; background:var(--bg) }
+  .measures dt { color:var(--muted) } .measures dd { margin:0; font-weight:700; text-align:right; font-variant-numeric:tabular-nums }
+  .measures .explain { grid-column:1/-1; font-size:13px; font-weight:400; color:var(--muted); text-align:left }
   ol { margin:0; padding-left:20px; color:var(--muted) }
   [hidden] { display:none !important }
   @media (prefers-reduced-motion: reduce) { .guide { transition:none } }
@@ -83,8 +91,10 @@
 <script>
 const $ = id => document.getElementById(id);
 const out = $('out'), video = $('video');
-const TEXT = { green: 'Low probability of anemia', orange: 'Uncertain: a blood test is advised',
-               red: 'High probability of anemia: a blood test is strongly advised' };
+// Same words and thresholds as the Yako app: green < 0.40 ≤ orange < 0.65 ≤ red.
+const LEVEL = { green: ['Low', "No blood test needed for now, unless there are symptoms or a pregnancy."],
+                orange: ['Moderate', 'A blood test is advised to measure hemoglobin.'],
+                red: ['High', 'A blood test is strongly advised, as soon as possible.'] };
 let stream = null, busy = false;
 
 async function openCamera() {
@@ -231,12 +241,25 @@ async function analyse(blob) {
     const e = document.createElement('div'); e.className = 'verdict'; e.textContent = r.error || 'Analysis failed';
     out.append(e);
   } else {
-    const v = document.createElement('div'); v.className = 'verdict ' + r.triage; v.textContent = TEXT[r.triage];
+    const el = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
+    const [name, advice] = LEVEL[r.triage], p = Math.min(Math.max(r.probability, 0), 1);
+    const gauge = el('div', 'gauge'), legend = el('div', 'legend');
+    for (const [c, w, word] of [['green', 40, 'low'], ['orange', 25, 'moderate'], ['red', 35, 'high']]) {
+      const s = el('span', 'seg ' + c); s.style.width = w + '%'; gauge.append(s);
+      const l = el('span', null, word); l.style.width = w + '%'; legend.append(l);
+    }
+    const mark = el('div', 'mark'); mark.style.left = (p * 100) + '%'; gauge.append(mark);
+    const m = el('dl', 'measures');
+    m.append(el('dt', null, 'Estimated probability'), el('dd', null, Math.round(p * 100) + ' %'),
+             el('dt', null, 'Conjunctiva colour (a*)'), el('dd', null, r.a_norm.toFixed(1)),
+             el('dd', 'explain', "a* measures how red the inner eyelid is, corrected by the person's own skin. "
+                                + 'The lower it is, the paler the eyelid, which is a sign of anemia.'));
     const img = new Image(); img.alt = 'Analysed area: conjunctiva in green, skin reference in blue';
     img.src = 'data:image/jpeg;base64,' + r.overlay;
-    const s = document.createElement('div'); s.className = 'small';
-    s.textContent = `Probability ${Math.round(r.probability * 100)} % · a_norm ${r.a_norm.toFixed(2)} · green = conjunctiva measured, blue = skin reference`;
-    out.append(v, img, s);
+    out.append(el('div', 'small', 'Anemia risk'), el('div', 'verdict ' + r.triage, name), el('div', null, advice),
+               gauge, legend, m, img, el('div', 'small', 'Green: the area measured. Blue: the skin used as reference.'),
+               el('div', 'small', 'Research demo, not a diagnosis: only a blood test measures hemoglobin. Pregnant women '
+                                 + 'and anyone with warning signs (breathlessness, fainting) need a blood test whatever the result.'));
   }
   const again = document.createElement('button'); again.className = 'main'; again.type = 'button';
   again.textContent = r.ok ? 'Take another photo' : 'Try again';
