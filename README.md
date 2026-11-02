@@ -71,20 +71,23 @@ limitations.
 
 ## Quick start
 
-Python 3.10 or later. CPU is enough (about one second per photo).
+Python 3.10 or later (the commands below use `python3`, as on macOS and Linux; on Windows type `python`). CPU is enough (about one second per photo).
 
 ```bash
 git clone https://github.com/Meditect/yako-anemia-eye.git && cd yako-anemia-eye
-python -m venv .venv && source .venv/bin/activate
+python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-
-# Command line (the 125 MB segmentation weights download on first run)
-python predict.py my_eye_photo.jpg --overlay results/
-
-# Web demo
-uvicorn server:app --host 0.0.0.0 --port 8000
-# then open http://localhost:8000
+python3 predict.py my_eye_photo.jpg --overlay results/
 ```
+
+The 125 MB segmentation weights download on the first run. On Windows, activate the environment with
+`.venv\Scripts\activate`. Web demo:
+
+```bash
+uvicorn server:app --host 0.0.0.0 --port 8000
+```
+
+Then open http://localhost:8000.
 
 The web demo opens the camera directly in the page, on a computer (webcam) as on a phone, with an oval guide where
 the pink inner eyelid should be. Choosing an existing photo is also possible.
@@ -94,10 +97,9 @@ On a phone, browsers allow the live camera only over https. To test from a phone
 ```bash
 openssl req -x509 -newkey rsa:2048 -nodes -days 30 -subj "/CN=yako-demo" -keyout key.pem -out cert.pem
 uvicorn server:app --host 0.0.0.0 --port 8000 --ssl-keyfile key.pem --ssl-certfile cert.pem
-# then open https://<your computer's IP>:8000 on the phone and accept the certificate warning
 ```
 
-Over plain http, the page falls back to the phone's own camera app, which also works.
+Then open `https://<your computer's IP>:8000` on the phone and accept the certificate warning. Over plain http, the page falls back to the phone's own camera app, which also works.
 
 With Docker:
 
@@ -116,7 +118,7 @@ r = eye.predict(cv2.imread('photo.jpg'))
 print(r.ok, r.triage, r.probability, r.error)
 ```
 
-Tests: `python -m pytest tests`.
+Tests: `python3 -m pytest tests`.
 
 ### Taking a good photo
 
@@ -177,21 +179,24 @@ classé vert. Détails et limites dans [MODEL_CARD.md](MODEL_CARD.md).
 
 ### Démarrage rapide
 
-Il faut Python 3.10 ou plus récent. Un ordinateur ordinaire suffit (environ une seconde par photo), sans carte
+Il faut Python 3.10 ou plus récent (les commandes utilisent `python3`, comme sur Mac et Linux ; sous Windows, taper `python`). Un ordinateur ordinaire suffit (environ une seconde par photo), sans carte
 graphique.
 
 ```bash
 git clone https://github.com/Meditect/yako-anemia-eye.git && cd yako-anemia-eye
-python -m venv .venv && source .venv/bin/activate     # sous Windows : .venv\Scripts\activate
+python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-
-# En ligne de commande (les poids du modèle, 125 Mo, se téléchargent au premier lancement)
-python predict.py photo_oeil.jpg --overlay resultats/
-
-# Page de démonstration
-uvicorn server:app --host 0.0.0.0 --port 8000
-# puis ouvrir http://localhost:8000 dans le navigateur
+python3 predict.py photo_oeil.jpg --overlay resultats/
 ```
+
+Les poids du modèle (125 Mo) se téléchargent au premier lancement. Sous Windows, activer l'environnement avec
+`.venv\Scripts\activate`. Page de démonstration :
+
+```bash
+uvicorn server:app --host 0.0.0.0 --port 8000
+```
+
+Puis ouvrir http://localhost:8000 dans le navigateur.
 
 La page ouvre directement la caméra (webcam sur ordinateur, caméra du téléphone), avec un ovale qui montre où placer
 la partie rose. On peut aussi choisir une photo existante.
@@ -202,9 +207,9 @@ Wi-Fi :
 ```bash
 openssl req -x509 -newkey rsa:2048 -nodes -days 30 -subj "/CN=yako-demo" -keyout key.pem -out cert.pem
 uvicorn server:app --host 0.0.0.0 --port 8000 --ssl-keyfile key.pem --ssl-certfile cert.pem
-# puis ouvrir https://<adresse IP de l'ordinateur>:8000 sur le téléphone et accepter l'avertissement du certificat
 ```
 
+Puis ouvrir `https://<adresse IP de l'ordinateur>:8000` sur le téléphone et accepter l'avertissement du certificat.
 En http simple, la page ouvre l'appareil photo du téléphone à la place, ce qui marche aussi.
 
 Avec Docker :

@@ -1,4 +1,4 @@
-"""python -m pytest tests  (downloads the weights on first run)"""
+"""python3 -m pytest tests  (downloads the weights on first run)"""
 import numpy as np
 
 from anemia_eye import AnemiaEye

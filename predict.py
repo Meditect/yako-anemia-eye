@@ -1,4 +1,4 @@
-"""Command line: python predict.py photo.jpg [more.jpg ...] [--overlay out_dir]"""
+"""Command line: python3 predict.py photo.jpg [more.jpg ...] [--overlay out_dir]"""
 import argparse
 from pathlib import Path
 
